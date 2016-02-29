@@ -26,8 +26,11 @@ def neighborhood(pos_bmu,shape,width):
     @type width: float
     @return: La fonction de voisinage pour chaque unité de la SOM (numpy.array)
     '''
-    # TODO
-    return None
+    i = numpy.arange(shape)
+    j = i.T
+    v = numpy.exp(-((i - SOMETHING) ** 2 + (j - SOMETHING) ** 2) / (2 * width ** 2))
+    
+    return v[:, :, numpy.newaxis, numpy.newaxis]
 
 def distance(proto,inp):
     '''
@@ -38,8 +41,7 @@ def distance(proto,inp):
     @type input: numpy.array
     @return: La distance entre l'entrée courante et le prototype pour chaque unité de la SOM (numpy.array)
     '''
-    # TODO
-    return None
+    return numpy.sqrt(numpy.sum(numpy.sum((proto - inp[numpy.newaxis, numpy.newaxis, :, :]) ** 2, axis=3), axis=2))
 
 class SOM:
     ''' Classe implémentant une carte de Kohonen. '''
