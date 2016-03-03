@@ -26,11 +26,11 @@ def neighborhood(pos_bmu,shape,width):
     @type width: float
     @return: La fonction de voisinage pour chaque unité de la SOM (numpy.array)
     '''
-    i = numpy.arange(shape)
-    j = i.T
-    v = numpy.exp(-((i - SOMETHING) ** 2 + (j - SOMETHING) ** 2) / (2 * width ** 2))
+    X, Y = numpy.ogrid[0:shape[0], 0:shape[1]]
+    X -= pos_bmu[0]
+    Y -= pos_bmu[1]
     
-    return v[:, :, numpy.newaxis, numpy.newaxis]
+    return numpy.exp(-(X ** 2 + Y ** 2) / (2. * width ** 2))
 
 def distance(proto,inp):
     '''
@@ -41,7 +41,7 @@ def distance(proto,inp):
     @type input: numpy.array
     @return: La distance entre l'entrée courante et le prototype pour chaque unité de la SOM (numpy.array)
     '''
-    return numpy.sqrt(numpy.sum(numpy.sum((proto - inp[numpy.newaxis, numpy.newaxis, :, :]) ** 2, axis=3), axis=2))
+    return numpy.sqrt(numpy.sum(numpy.sum((proto - inp[numpy.newaxis, numpy.newaxis, :]) ** 2, axis=3), axis=2))
 
 class SOM:
     ''' Classe implémentant une carte de Kohonen. '''
@@ -94,11 +94,18 @@ class SOM:
         for i in range(1,epochs+1):
             # Choix d'un exemple aléatoire
             n = numpy.random.randint(train_samples['input'].shape[0])
+            
             # Entrée courante
             self.inp[:,:] = train_samples['input'][n]
+            
             # Mise à jour des poids (utiliser les fonctions neighborhood et distance)
-            self.reset() # TODO à supprimer, juste mis pour que les poids changent sur l'affichage
-            # TODO Calcul delta W
+            # self.reset() # TODO à supprimer, juste mis pour que les poids changent sur l'affichage
+            # Mise à jour des poids en fonction de l'état actuel
+            d = distance(self.weights, self.inp)
+            bmu = numpy.argmin(d)
+            v = neighborhood(numpy.unravel_index(bmu, self.shape[1]), self.shape[1], width)
+            self.weights = self.weights + lrate * v[:, :, numpy.newaxis, numpy.newaxis] * (self.inp[numpy.newaxis, numpy.newaxis, :, :] - self.weights)
+            
             # Sortie correspondant à l'entrée courante
             output = train_samples['output'][n]
             # Apprentissage de la labelisation (avec la méthode de votre choix)
